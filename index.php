@@ -59,13 +59,26 @@ if (isset($_POST['addItem'])) {
 }
 
 
-function generateId($conn) {
-$sql = "SELECT COUNT(*) as count FROM item";
-$result = $conn->query($sql);
-$row = $result->fetch_assoc();
-$nextId = $row['count'] + 1;
-return $nextId;
+function generateId($conn, $id = 0) {
+  if ($id == 0) {
+      $sql = "SELECT COUNT(*) as count FROM item";
+      $result = $conn->query($sql);
+      $row = $result->fetch_assoc();
+      $id = $row['count'] + 1;
+  }
+  
+  $sql = "SELECT iId FROM item WHERE iId = $id";
+  $result = $conn->query($sql);
+  
+  if ($result->num_rows > 0) {
+      // ID exists, increment and call the function again
+      return generateId($conn, $id + 1);
+  } else {
+      // ID doesn't exist, return the ID
+      return $id;
+  }
 }
+
 
 
 // Q3
@@ -98,6 +111,35 @@ if (isset($_POST['updateItem'])) {
 if (isset($_POST['deleteItem'])) {
   $itemId = $_POST['itemId'];
 
+  // First, delete related records from the order_item table
+  $sql = "DELETE FROM order_item WHERE iId = ?";
+  $stmt = $conn->prepare($sql);
+  $stmt->bind_param("i", $itemId);
+  $stmt->execute();
+  $stmt->close();
+
+  // Next, delete related records from the oldprice table
+  $sql = "DELETE FROM oldprice WHERE iId = ?";
+  $stmt = $conn->prepare($sql);
+  $stmt->bind_param("i", $itemId);
+  $stmt->execute();
+  $stmt->close();
+
+  // Then, delete related records from the store_item table
+  $sql = "DELETE FROM store_item WHERE iId = ?";
+  $stmt = $conn->prepare($sql);
+  $stmt->bind_param("i", $itemId);
+  $stmt->execute();
+  $stmt->close();
+
+  // Also, delete related records from the vendor_item table
+  $sql = "DELETE FROM vendor_item WHERE iId = ?";
+  $stmt = $conn->prepare($sql);
+  $stmt->bind_param("i", $itemId);
+  $stmt->execute();
+  $stmt->close();
+
+  // Finally, delete the item from the item table
   $sql = "DELETE FROM item WHERE iId = ?";
   $stmt = $conn->prepare($sql);
   $stmt->bind_param("i", $itemId);
@@ -116,6 +158,8 @@ if (isset($_POST['deleteItem'])) {
           </div>';
   }
 }
+
+
 
 
 // The view-based queries (QV1-QV5) can be executed and displayed similarly to the other questions, by first checking if

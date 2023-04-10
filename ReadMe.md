@@ -1,5 +1,7 @@
 # Arlington Sprouts PHP Database Project README
 
+<img src="./assets/screenshot.png">
+
 This README provides instructions on how to set up and run the Arlington Sprouts PHP project. The project includes PHP scripts that connect to the Arlington Sprouts database and perform various operations.
 
 # Prerequisites
